@@ -725,8 +725,8 @@ class TrackSelectionService {
     if (info != null) {
             
       if (metadata.backend == MediaBackend.jellyfin) {
-        if (info.defaultSubtitleStreamIndex != null && info.defaultSubtitleStreamIndex != -1) {
-          final defaultSubtitleStreamIndex = info.defaultSubtitleStreamIndex ?? -1;
+        final defaultSubtitleStreamIndex = info.defaultSubtitleStreamIndex;
+          if (defaultSubtitleStreamIndex != null && defaultSubtitleStreamIndex != -1) {
           return TrackSelectionResult(
             availableTracks[defaultSubtitleStreamIndex],
             TrackSelectionPriority.serverSelected,
