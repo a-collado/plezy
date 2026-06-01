@@ -644,8 +644,19 @@ class TrackSelectionService {
       }
     }
 
-    // Priority 2: Check Plex-selected track from media info
+    // Priority 2: Check server-selected track from media info
     if (plexMediaInfo != null && availableTracks.isNotEmpty) {
+      
+      if (metadata.backend == MediaBackend.jellyfin) {
+        final defaultAudioStreamIndex = plexMediaInfo!.defaultAudioStreamIndex;
+        if (defaultAudioStreamIndex != null && defaultAudioStreamIndex != -1) {
+          return TrackSelectionResult(
+            availableTracks[defaultAudioStreamIndex],
+            TrackSelectionPriority.serverSelected,
+          );
+        }
+      }
+      
       final plexSelectedTrack = plexMediaInfo!.audioTracks.where((t) => t.selected).firstOrNull;
 
       if (plexSelectedTrack != null) {
@@ -712,6 +723,17 @@ class TrackSelectionService {
     // account/show/per-item prefs; Jellyfin exposes DefaultSubtitleStreamIndex.
     final info = plexMediaInfo;
     if (info != null) {
+            
+      if (metadata.backend == MediaBackend.jellyfin) {
+        final defaultSubtitleStreamIndex = info.defaultSubtitleStreamIndex;
+          if (defaultSubtitleStreamIndex != null && defaultSubtitleStreamIndex != -1) {
+          return TrackSelectionResult(
+            availableTracks[defaultSubtitleStreamIndex],
+            TrackSelectionPriority.serverSelected,
+          );
+        }
+      }
+      
       final serverSelectedTrack = availableTracks.isNotEmpty
           ? info.subtitleTracks.where((track) => track.selected).firstOrNull
           : null;
