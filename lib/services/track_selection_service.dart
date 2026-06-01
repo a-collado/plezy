@@ -712,6 +712,17 @@ class TrackSelectionService {
     // account/show/per-item prefs; Jellyfin exposes DefaultSubtitleStreamIndex.
     final info = plexMediaInfo;
     if (info != null) {
+            
+      if (metadata.backend == MediaBackend.jellyfin) {
+        if (info.defaultSubtitleStreamIndex != null && info.defaultSubtitleStreamIndex != -1) {
+          final defaultSubtitleStreamIndex = info.defaultSubtitleStreamIndex ?? -1;
+          return TrackSelectionResult(
+            availableTracks[defaultSubtitleStreamIndex],
+            TrackSelectionPriority.serverSelected,
+          );
+        }
+      }
+      
       final serverSelectedTrack = availableTracks.isNotEmpty
           ? info.subtitleTracks.where((track) => track.selected).firstOrNull
           : null;
