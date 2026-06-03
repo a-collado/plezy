@@ -644,8 +644,26 @@ class TrackSelectionService {
       }
     }
 
-    // Priority 2: Check Plex-selected track from media info
+    // Priority 2: Check server-selected track from media info
     if (plexMediaInfo != null && availableTracks.isNotEmpty) {
+      if (metadata.backend == MediaBackend.jellyfin && plexMediaInfo!.defaultAudioStreamIndex != null) {
+        // Jellyfin exposes its selected audio track via defaultAudioStreamIndex
+        final index = plexMediaInfo!.defaultAudioStreamIndex;
+
+        final jellyfinSelectedTrack = plexMediaInfo!.audioTracks.where((t) => t.index == index).firstOrNull;
+        if (jellyfinSelectedTrack != null) {
+          final matchedMpvTrack = findMpvTrackForPlexAudio(
+            jellyfinSelectedTrack,
+            availableTracks,
+            allPlexTracks: plexMediaInfo!.audioTracks,
+          );
+
+          if (matchedMpvTrack != null) {
+            return TrackSelectionResult(matchedMpvTrack, TrackSelectionPriority.serverSelected);
+          }
+        }
+      }
+
       final plexSelectedTrack = plexMediaInfo!.audioTracks.where((t) => t.selected).firstOrNull;
 
       if (plexSelectedTrack != null) {
@@ -712,6 +730,32 @@ class TrackSelectionService {
     // account/show/per-item prefs; Jellyfin exposes DefaultSubtitleStreamIndex.
     final info = plexMediaInfo;
     if (info != null) {
+      if (metadata.backend == MediaBackend.jellyfin && info.defaultSubtitleStreamIndex != null) {
+        // Jellyfin exposes its selected subtitle track via defaultSubtitleStreamIndex
+        final index = info.defaultSubtitleStreamIndex;
+
+        // An index of -1 indicates no subtitles
+        if (index == -1) {
+          return TrackSelectionResult(SubtitleTrack.off, TrackSelectionPriority.serverSelected);
+        }
+
+        final jellyfinSelectedTrack = availableTracks.isNotEmpty
+            ? info.subtitleTracks.where((track) => track.index == index).firstOrNull
+            : null;
+
+        if (jellyfinSelectedTrack != null) {
+          final matchedMpvTrack = findMpvTrackForPlexSubtitle(
+            jellyfinSelectedTrack,
+            availableTracks,
+            allPlexTracks: info.subtitleTracks,
+          );
+
+          if (matchedMpvTrack != null) {
+            return TrackSelectionResult(matchedMpvTrack, TrackSelectionPriority.serverSelected);
+          }
+        }
+      }
+
       final serverSelectedTrack = availableTracks.isNotEmpty
           ? info.subtitleTracks.where((track) => track.selected).firstOrNull
           : null;
